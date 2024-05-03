@@ -120,13 +120,13 @@ UByte* ResolveSolvedPositions(UByte *board, int grid_size){
                                        + IsSurroudingData(board, grid_size, x, y, 9)
                                        + IsSurroudingData(board, grid_size, x, y, 10)
                                        + IsSurroudingData(board, grid_size, x, y, 11);
-                
-                if (surrouding_empty + surrouding_mines - surrouding_filled >= (position_data - 3)){
+
+                if (surrouding_empty + surrouding_mines == (position_data - 2)){
                     // TODO: Flag all surrouding tiles, the game handler will handle it
                     printf("Flag positions surrouding %d : %d\n", (int)x, (int)y);
                 };
 
-                if (surrouding_mines >= (position_data - 3)){ // if every mine is met
+                if (surrouding_mines >= (position_data - 2)){ // if every mine is met
                     // TODO: Uncover all surrouding positions
                     printf("Uncover positions surrouding %d : %d\n", (int)x, (int)y);
                 };
@@ -171,11 +171,11 @@ int main(){
     board[0][0] = loc1 | loc2 << 4;
     board[1][0] = loc3 | loc4 << 4;
 
-    SetPositionData((UByte *)board, grid_size, 2, 0, 2);
+    SetPositionData((UByte *)board, grid_size, 2, 0, 3);
     SetPositionData((UByte *)board, grid_size, 2, 1, 4);
 
     /*
-    1 4 2
+    1 4 3
     4 0 4
     0 0 0
     */
