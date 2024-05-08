@@ -215,5 +215,6 @@ int main(){
 
     Print2DArray(GetMinefield(), grid_size);
 
+    EndGame(); // frees pointers
     return 0;
 };

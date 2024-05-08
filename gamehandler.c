@@ -107,3 +107,10 @@ void StartGame(int param_grid_size, int param_num_mines) {
     // Fill the non-mine spaces with the number of surrounding mines
     FillNonMineSpaces(minefield, grid_size);
 }
+
+void EndGame() {
+    free(minefield);
+    minefield = NULL;
+    free(uncovered_minefield);
+    uncovered_minefield = NULL;
+}

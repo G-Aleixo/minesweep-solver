@@ -14,5 +14,5 @@ int GetGridSize();
 int UpdateBoard(UByte action, int x, int y);
 
 void StartGame(int param_grid_size, int param_num_mines);
-
+void EndGame();
 #endif
