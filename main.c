@@ -2,11 +2,6 @@
 #include <stdlib.h>
 #include "gamehandler.h"
 
-#define MemoryLeak (1)
-#define Dont free(new_board); new_board = NULL;
-// hehe the funny
-// will remove next comit
-
 typedef unsigned char UByte; // unsigned byte, 0 to 255
 typedef char SByte; // signed byte, -128 to 127
 
@@ -64,38 +59,19 @@ go around the board and check these conditions:
 /*
 Returns 1 if the x and y coordinates are outside the board
 */
-int IsOutOfBounds(UByte *board, int grid_size, int x, int y){
+int IsOutOfBounds(int grid_size, int x, int y){
     if ((x < 0 | x > (grid_size - 1)) | (y < 0 | y > (grid_size - 1))){
         return 1;};
     return 0;
 };
 
 UByte GetPositionData(UByte *board, int grid_size, int x, int y){
-    
-    if (IsOutOfBounds(board, grid_size, x, y))
-    {return 15;}
+    if (IsOutOfBounds(grid_size, x, y))
+    {return (UByte)15;}
 
-    int index = y * (grid_size + 1) / 2 + x / 2;
-    UByte double_value = *(board + index); //This is actually the state of 2 mines compressed into 1 byte
-    UByte value = (x%2 == 1) ? double_value >> 4 & 0b1111: double_value & 0b1111;
-    return value;
-};
-
-void SetPositionData(UByte *board, int grid_size, int x, int y, UByte data){
-    int index = y * (grid_size + 1) / 2 + x / 2;
-
-    if (x%2 == 1){
-        board[index] &= 0b00001111;
-        board[index] |= data << 4;
-    } else {
-        board[index] &= 0b11110000;
-        board[index] |= data;
-    };
-
-};
-UByte SetReturnData(UByte *return_board, int grid_size, int x, int y){
-    int index = (y / 2) * grid_size + (x / 2);
-    
+    // TODO: compress the data into a single byte again
+    int index = y * grid_size + x;
+    return board[index];
 };
 
 int IsSurroudingData(UByte *board, int grid_size, int x, int y, UByte data){
@@ -111,10 +87,35 @@ int IsSurroudingData(UByte *board, int grid_size, int x, int y, UByte data){
     return mines_nearby;
 };
 
-UByte* ResolveSolvedPositions(UByte *board, UByte* return_board, int grid_size){
+int UncoverOrFlagNearby(int grid_size, int x, int y, int action){
+    for (int dx = -1; dx <= 1; dx++) {
+        for (int dy = -1; dy <= 1; dy++) {
+            if (IsOutOfBounds(grid_size, x + dx, y + dy)){continue;};
+            int exit_code = UpdateBoard(action, x + dx, y + dy);
+            if (exit_code == -1){
+                printf("Game over\n");
+                printf("Position: %d : %d was a flag\n", (int)x + dx, (int)y + dy);
+                return -1;
+            };
+        };
+    };
+    return 0;
+};
+
+UByte* ResolveSolvedPositions(UByte *board, int grid_size){
+    
+    int solved_positions[grid_size][grid_size];
+    for (int y = 0; y < grid_size; y++) {
+        for (int x = 0; x < grid_size; x++) {
+            solved_positions[y][x] = 0; // initialize all positions as unsolved
+        }
+    }
+
     UByte return_data[(grid_size+1)/2][(grid_size+1)/2];
-    for (size_t y = 0; y < grid_size; y++){
-        for (size_t x = 0; x < grid_size; x++){
+    for (int y = 0; y < grid_size; y++){
+        for (int x = 0; x < grid_size; x++){
+            if (solved_positions[y][x] == 1){continue;}; // if the position has been solved, skip it
+
             UByte position_data = GetPositionData(board, grid_size, x, y); // get the current position's data
             if ((position_data <= 11) && (position_data >= 3)){ // if the space is not a mine or unknown
                 UByte surrouding_mines = IsSurroudingData(board, grid_size, x, y, 1);
@@ -127,46 +128,44 @@ UByte* ResolveSolvedPositions(UByte *board, UByte* return_board, int grid_size){
                                        + IsSurroudingData(board, grid_size, x, y, 7)
                                        + IsSurroudingData(board, grid_size, x, y, 8)
                                        + IsSurroudingData(board, grid_size, x, y, 9)
-                                       + IsSurroudingData(board, grid_size, x, y, 10)
-                                       + IsSurroudingData(board, grid_size, x, y, 11);
+                                       + IsSurroudingData(board, grid_size, x, y, 10);
 
                 if (surrouding_empty + surrouding_mines == (position_data - 2)){
-                    // TODO: Flag all surrouding tiles, the game handler will handle it
-                    printf("Flag positions surrouding %d : %d\n", (int)x, (int)y);
+                    if (UncoverOrFlagNearby(grid_size, x, y, 1)){
+                        return -1;
+                    }
                 };
 
                 if (surrouding_mines >= (position_data - 2)){ // if every mine is met
-                    // TODO: Uncover all surrouding positions
-                    printf("Uncover positions surrouding %d : %d\n", (int)x, (int)y);
+                    if (UncoverOrFlagNearby(grid_size, x, y, 0)){
+                        return -1;
+                    }
                 };
+
+                solved_positions[y][x] = 1;
+
             } else if (position_data == 2){ // if there are 0 mines nearby, only uncover nearby spaces
                 // uncover nearby spaces
-                printf("Uncover spaces surrouding %d : %d\n", (int)x, (int)y);
+                if (UncoverOrFlagNearby(grid_size, x, y, 0)){
+                    return -1;
+                }
+                solved_positions[y][x] = 1;
             };
         };
     };
     return 0;
 };
-
 void PrintBoard(UByte *board, int grid_size){
     for (int y = 0; y < grid_size; y++){
         for (int x = 0; x < grid_size; x++){
-            printf("%d ", GetPositionData(board, grid_size, x, y));
-        };
-        printf("\n");
-    };
-};
-
-void Print2DArray(UByte *array, int grid_size){
-    for (int y = 0; y < grid_size; y++){
-        for (int x = 0; x < grid_size; x++){
-            switch (array[y * grid_size + x])
+            switch (board[y * grid_size + x])
             {
             case 0:
                 printf("? ");
                 break;
             case 1:
-                printf("\033[0;31m⚑\033[0m "); // print red flag
+                printf("\033[0;31m⚑\033[0m ");
+                break;
             case 2:
                 printf("\033[0;32m%d\033[0m ", 0);
                 break;
@@ -180,7 +179,7 @@ void Print2DArray(UByte *array, int grid_size){
                 printf("\033[0;31m%d\033[0m ", 3);
                 break;
             case 6:
-                printf("\033[0;0,34m%d\033[0m ", 4);
+                printf("\033[0;34m%d\033[0m ", 4);
                 break;
             case 7:
                 printf("\033[0;31m%d\033[0m ", 5);
@@ -203,18 +202,26 @@ void Print2DArray(UByte *array, int grid_size){
 };
 
 int main(){
-    int grid_size = 4;
+    int grid_size = 20;
 
-    StartGame(grid_size, 4);
+    StartGame(grid_size, 40);
     printf("Number of mines: %d\n", GetNumMines());
     printf("Grid size: %d\n", GetGridSize());
-    printf("Minefield:\n");
-    Print2DArray(GetMinefield(), grid_size);
+    UpdateBoard(0, 0, 0);
 
-    printf("%d\n", UpdateBoard(0, 0, 0));
+    int depth = 8;
 
-    Print2DArray(GetMinefield(), grid_size);
+    for (int i = 0; i < depth; i++){
+        if (ResolveSolvedPositions(GetMinefield(), grid_size)){
+            printf("Game over\n");
+            break; // Hit a mine :(
+        }
+    };
+    printf("Resulting minefield:\n");
+    PrintBoard(GetMinefield(), grid_size);
+    printf("\n");
+    PrintBoard(GetTrueMinefield(), grid_size);
 
-    EndGame(); // frees pointers
+    EndGame(); // free pointers
     return 0;
 };

@@ -16,6 +16,12 @@ static UByte* uncovered_minefield;
 static int num_mines;
 static int grid_size;
 
+static int IsOutOfBounds(int grid_size, int x, int y){
+    if ((x < 0 | x > (grid_size - 1)) | (y < 0 | y > (grid_size - 1))){
+        return 1;};
+    return 0;
+};
+
 // returns a pointer to the first element of the array of a square array of size grid_size
 UByte* InitializeMinefield(int grid_size){
     UByte* minefield = (UByte*)malloc(grid_size * grid_size * sizeof(UByte));
@@ -33,28 +39,31 @@ UByte* PopulateMinefield(UByte* board, int grid_size, int num_mines){
         do {
             x = rand() % grid_size;
             y = rand() % grid_size;
-        } while (minefield[x * grid_size + y] == 1); // Ensure the cell is not already a mine
-        minefield[x * grid_size + y] = 1; // Mark the cell as a mine
+        } while (minefield[y * grid_size + x] == 1); // Ensure the cell is not already a mine
+        minefield[y * grid_size + x] = 1; // Mark the cell as a mine
     }
     return minefield;
 }
 
 static void FillNonMineSpaces(UByte* minefield, int grid_size) {
-    for (int i = 0; i < grid_size; i++) {
-        for (int j = 0; j < grid_size; j++) {
-            if (minefield[i * grid_size + j] != 1) {
+    for (int y = 0; y < grid_size; y++) {
+        for (int x = 0; x < grid_size; x++) {
+            if (minefield[y * grid_size + x] != 1) {
                 int count = 0;
                 // Check the surrounding cells for mines
                 for (int dx = -1; dx <= 1; dx++) {
                     for (int dy = -1; dy <= 1; dy++) {
-                        int nx = i + dx;
-                        int ny = j + dy;
-                        if (nx >= 0 && nx < grid_size && ny >= 0 && ny < grid_size && minefield[nx * grid_size + ny] == 1) {
+                        int nx = x + dx;
+                        int ny = y + dy;
+                        if (dx == 0 && dy == 0) {
+                            continue;
+                        }
+                        if (!IsOutOfBounds(grid_size, nx, ny) && minefield[ny * grid_size + nx] == 1) {
                             count++;
                         }
                     }
                 }
-                minefield[i * grid_size + j] = count + 2;
+                minefield[y * grid_size + x] = count + 2;
             }
         }
     }
@@ -83,13 +92,16 @@ UByte* GetMinefield() {
 int UpdateBoard(UByte action, int x, int y) {
     switch (action) {
         case 0: // Uncover
-            if (minefield[x * grid_size + y] == 1 && uncovered_minefield[x * grid_size + y] != 2) {
+            if (minefield[y * grid_size + x] == 1 && uncovered_minefield[y * grid_size + x] == 0) {
                 return -1; // Game over
             }
-            uncovered_minefield[x * grid_size + y] = minefield[x * grid_size + y];
+            uncovered_minefield[y * grid_size + x] = minefield[y * grid_size + x];
             break;
         case 1: // Flag
-            uncovered_minefield[x * grid_size + y] = 2; // Mark the cell as flagged
+            if (uncovered_minefield[y * grid_size + x] != 0) {
+                return 0; // Cell is already uncovered or flagged, do nothing
+            }
+            uncovered_minefield[y * grid_size + x] = 1; // Mark the cell as flagged
             break;
     }
     return 0;
