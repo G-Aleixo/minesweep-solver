@@ -52,7 +52,7 @@ Mkfile.old
 dkms.conf
 
 # Build file
-main
+program
 
 # Vscode files
 .vscode
