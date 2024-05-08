@@ -1,5 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include "gamehandler.h"
 
+#define MemoryLeak (1)
+#define Dont free(new_board); new_board = NULL;
+// hehe the funny
+// will remove next comit
 
 typedef unsigned char UByte; // unsigned byte, 0 to 255
 typedef char SByte; // signed byte, -128 to 127
@@ -151,40 +157,63 @@ void PrintBoard(UByte *board, int grid_size){
     };
 };
 
+void Print2DArray(UByte *array, int grid_size){
+    for (int y = 0; y < grid_size; y++){
+        for (int x = 0; x < grid_size; x++){
+            switch (array[y * grid_size + x])
+            {
+            case 0:
+                printf("? ");
+                break;
+            case 1:
+                printf("\033[0;31m⚑\033[0m "); // print red flag
+            case 2:
+                printf("\033[0;32m%d\033[0m ", 0);
+                break;
+            case 3:
+                printf("\033[0;34m%d\033[0m ", 1);
+                break;
+            case 4:
+                printf("\033[0;32m%d\033[0m ", 2);
+                break;
+            case 5:
+                printf("\033[0;31m%d\033[0m ", 3);
+                break;
+            case 6:
+                printf("\033[0;0,34m%d\033[0m ", 4);
+                break;
+            case 7:
+                printf("\033[0;31m%d\033[0m ", 5);
+                break;
+            case 8:
+                printf("\033[0;36m%d\033[0m ", 6);
+                break;
+            case 9:
+                printf("\033[0;30m%d\033[0m ", 7);
+                break;
+            case 10:
+                printf("\033[0;90m%d\033[0m ", 8);
+                break;
+            default:
+                break;
+            }
+        };
+        printf("\n");
+    };
+};
+
 int main(){
-    int grid_size = 3;
+    int grid_size = 4;
 
-    /*
-    make a square board of the mines
-    first size is the y and the next is x
+    StartGame(grid_size, 4);
+    printf("Number of mines: %d\n", GetNumMines());
+    printf("Grid size: %d\n", GetGridSize());
+    printf("Minefield:\n");
+    Print2DArray(GetMinefield(), grid_size);
 
-    the x size is actually duplicated due to the way the data is stored, and the y value is normal
-    */
-    UByte board[grid_size][(grid_size + 1) / 2];
+    printf("%d\n", UpdateBoard(0, 0, 0));
 
-    //Check above in the huge comment on the main.c file to see how this works :)
-    UByte return_board[(grid_size + 1) / 2][(grid_size + 1) / 2];
-    
-    SetPositionData((UByte *)board, grid_size, 0, 0, 1);
-    SetPositionData((UByte *)board, grid_size, 1, 0, 4);
-    SetPositionData((UByte *)board, grid_size, 2, 0, 3);
-    SetPositionData((UByte *)board, grid_size, 0, 1, 4);
-    SetPositionData((UByte *)board, grid_size, 1, 1, 0);
-    SetPositionData((UByte *)board, grid_size, 2, 1, 4);
-    SetPositionData((UByte *)board, grid_size, 0, 2, 0);
-    SetPositionData((UByte *)board, grid_size, 1, 2, 0);
-    SetPositionData((UByte *)board, grid_size, 2, 2, 0);
-
-    /*
-    1 4 3
-    4 0 4
-    0 0 0
-    */
-
-    PrintBoard((UByte *)board, grid_size);
-    
-    ResolveSolvedPositions((UByte *)board, (UByte *)return_board, grid_size);
-
+    Print2DArray(GetMinefield(), grid_size);
 
     return 0;
 };
