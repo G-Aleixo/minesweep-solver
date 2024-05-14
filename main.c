@@ -75,16 +75,16 @@ UByte GetPositionData(UByte *board, int grid_size, int x, int y){
 };
 
 int IsSurroudingData(UByte *board, int grid_size, int x, int y, UByte data){
-    int mines_nearby = 0;
-    if (GetPositionData(board, grid_size, x - 1, y - 1) == data){mines_nearby++;};
-    if (GetPositionData(board, grid_size, x - 1, y    ) == data){mines_nearby++;};
-    if (GetPositionData(board, grid_size, x - 1, y + 1) == data){mines_nearby++;};
-    if (GetPositionData(board, grid_size, x    , y + 1) == data){mines_nearby++;};
-    if (GetPositionData(board, grid_size, x + 1, y + 1) == data){mines_nearby++;};
-    if (GetPositionData(board, grid_size, x + 1, y    ) == data){mines_nearby++;};
-    if (GetPositionData(board, grid_size, x + 1, y - 1) == data){mines_nearby++;};
-    if (GetPositionData(board, grid_size, x    , y - 1) == data){mines_nearby++;};
-    return mines_nearby;
+    int data_nearby = 0;
+    if (GetPositionData(board, grid_size, x - 1, y - 1) == data){data_nearby++;};
+    if (GetPositionData(board, grid_size, x - 1, y    ) == data){data_nearby++;};
+    if (GetPositionData(board, grid_size, x - 1, y + 1) == data){data_nearby++;};
+    if (GetPositionData(board, grid_size, x    , y + 1) == data){data_nearby++;};
+    if (GetPositionData(board, grid_size, x + 1, y + 1) == data){data_nearby++;};
+    if (GetPositionData(board, grid_size, x + 1, y    ) == data){data_nearby++;};
+    if (GetPositionData(board, grid_size, x + 1, y - 1) == data){data_nearby++;};
+    if (GetPositionData(board, grid_size, x    , y - 1) == data){data_nearby++;};
+    return data_nearby;
 };
 
 int UncoverOrFlagNearby(int grid_size, int x, int y, int action){
@@ -93,6 +93,7 @@ int UncoverOrFlagNearby(int grid_size, int x, int y, int action){
             if (IsOutOfBounds(grid_size, x + dx, y + dy)){continue;};
             int exit_code = UpdateBoard(action, x + dx, y + dy);
             if (exit_code == -1){
+                // TODO: handle this on the solver
                 printf("Game over\n");
                 printf("Position: %d : %d was a flag\n", (int)x + dx, (int)y + dy);
                 return -1;
@@ -214,6 +215,7 @@ int main(){
     for (int i = 0; i < depth; i++){
         if (ResolveSolvedPositions(GetMinefield(), grid_size)){
             printf("Game over\n");
+            // solver broke pls fix
             break; // Hit a mine :(
         }
     };
